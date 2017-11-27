@@ -23,7 +23,7 @@ defmodule ExjpetTest do
     test_descs = :poison.decode(resp.body)
 
     for %{"pattern" => pattern, "tests" => tests} <- test_descs do
-      IO.puts "* pattern  #{inspect pattern}"
+      # IO.puts "* pattern  #{inspect pattern}"
       matcher = :ejpet.compile(pattern, :poison)
       Enum.each(tests, &do_test(matcher, &1))
     end
@@ -31,11 +31,11 @@ defmodule ExjpetTest do
 
   defp do_test(matcher, %{"inject" => inject, "captures" => captures, "node" => node, "status" => status}) do
     node_text = :poison.encode(node)
-    IO.puts "node_text  #{inspect node_text}"
+    # IO.puts "node_text  #{inspect node_text}"
     node_backend = :ejpet.decode(node_text, :ejpet.backend(matcher))
-    IO.puts "node_backend  #{inspect node_backend}"
+    # IO.puts "node_backend  #{inspect node_backend}"
     {s, caps} = :ejpet.run(node_backend, matcher, inject)
-    IO.puts "{s, caps}  #{inspect s} #{inspect caps}"
+    # IO.puts "{s, caps}  #{inspect s} #{inspect caps}"
     real_c = :ejpet.decode(:ejpet.encode(caps, :ejpet.backend(matcher)), :ejpet.backend(matcher))
     reencoded_exp_c = :ejpet.decode(:ejpet.encode(captures, :poison), :ejpet.backend(matcher))
     assert {s, real_c} == {status, reencoded_exp_c}

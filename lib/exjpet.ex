@@ -3,16 +3,13 @@ defmodule Exjpet do
 
   @moduledoc """
   Documentation for Exjpet.
-  """
-
-  @doc """
 
   ## Examples
 
       iex> epm = Exjpet.compile("[1, *, (?<cap>{})]", :poison)
       iex> json = Exjpet.decode("[1, 2, {\\\"a\\\": 42}]", :poison)
       iex> Exjpet.run(json, epm)
-      {true, [{"cap", [%{"a" => 42}]}]}
+      {true, %{"cap" => [%{"a" => 42}]}}
   """
 end
 
