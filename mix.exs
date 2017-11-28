@@ -33,7 +33,7 @@ defmodule Exjpet.Mixfile do
   defp mandatory_deps do
     [
       {:poison, "~> 3.1"},
-      {:ejpet, git: "git@github.com:nmichel/ejpet.git"}
+      {:ejpet, "~> 0.7.0"}
     ]
   end
 end
