@@ -65,8 +65,8 @@ defmodule Exjpet.Expression do
     constraints = Enum.map(constraints, &transform/1)
 
     quote bind_quoted: [constraints: constraints,
-                        deep?: deep?,
-                        global?: global?] do
+                        deep?:       deep?,
+                        global?:     global?] do
 
       open = deep? && "<!" || "<"
       close = deep? && "!>" || ">"
@@ -86,7 +86,7 @@ defmodule Exjpet.Expression do
 
   defp transform({:with_key, frag}) do
     quote do
-      unquote(frag) <> ":_"
+      unquote(transform(frag)) <> ":_"
     end
   end
 
@@ -113,8 +113,8 @@ defmodule Exjpet.Expression do
   end
 
   defp transform({:with_value, frag}) do
-    quote bind_quoted: [frag: transform(frag)] do
-      "_:" <> frag
+    quote do
+      "_:" <> unquote(transform(frag))
     end
   end
 
