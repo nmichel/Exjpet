@@ -21,9 +21,9 @@ defmodule Exjpet.Expression do
 
   @doc """
   Generate a list matching expression.
-  
+
   ## Examples
-  
+
       iex> list([1, 2])
       "[1,2]"
   """
@@ -36,6 +36,16 @@ defmodule Exjpet.Expression do
     end
   end
 
+  @doc """
+  Generate a object matching expression.
+
+  ## Examples
+
+      iex> object(with_value: 42, with_key: "foo")
+      "{_:42,\\\"foo\\\":_}"
+      iex> object(with_value: object(with: [key: "neh", value: 42]), with_key: "foo")
+      "{_:{\\\"neh\\\":42},\\\"foo\\\":_}"
+  """
   defmacro object(constraints \\ [])
   
   defmacro object(constraints) do
@@ -56,6 +66,20 @@ defmodule Exjpet.Expression do
     end
   end
 
+  @doc """
+  Generate a set matching expression.
+
+  ## Examples
+
+      iex> set([42])
+      "<42>"
+      iex> set([42], [global: true])
+      "<42>/g"
+      iex> set([object()], [deep: true])
+      "<!{}!>"
+      iex> set([object()], [deep: true, global: true])
+      "<!{}!>/g"
+  """
   defmacro set(constraints \\ [], modifiers \\ [])
 
   defmacro set(constraints, modifiers) do

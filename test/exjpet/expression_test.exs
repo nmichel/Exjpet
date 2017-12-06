@@ -4,7 +4,7 @@ defmodule Exjpet.ExpressionTest do
 
   doctest Exjpet.Expression
 
-  test "static list expressions" do
+  test "list expressions" do
     assert list() == "[]"
     assert list([]) == "[]"
     assert list([1]) == "[1]"
@@ -13,7 +13,7 @@ defmodule Exjpet.ExpressionTest do
     assert list([:any, "foo", :some]) == "[_,\"foo\",*]"
   end
   
-  test "static object expressions" do
+  test "object expressions" do
     assert object() == "{}"
     assert object([]) == "{}"
     assert object(with_key: "foo") == "{\"foo\":_}"
@@ -22,12 +22,12 @@ defmodule Exjpet.ExpressionTest do
     assert object(with: [key: "foo", value: "bar"]) == "{\"foo\":\"bar\"}"
   end
 
-  test "static capture expressions" do
+  test "capture expressions" do
     assert capture(:any, as: :val) == "(?<val>_)"
     assert capture(:any, as: "val") == "(?<val>_)"
   end
-  
-  test "static set expressions" do
+
+  test "set expressions" do
     assert set() == "<>"
     assert set([]) == "<>"
     assert set([], [global: true]) == "<>/g"
