@@ -54,7 +54,19 @@ defmodule Exjpet.Expression do
       "{" <> Enum.join(unquote(constraints), ",") <> "}"
     end
   end
-  
+
+  @doc """
+  Generate a capture matching expression.
+
+  ## Examples
+
+      iex> capture(object(), as: :val)
+      "(?<val>{})"
+      iex> capture(object(), as: "val")
+      "(?<val>{})"
+  """
+  defmacro capture(frag, opts)
+
   defmacro capture(frag, [as: name]) when is_atom(name) do
     quote do
       capture(unquote(frag), [as: unquote(to_string(name))])
@@ -100,13 +112,43 @@ defmodule Exjpet.Expression do
     end
   end
 
-  defp default_modifiers() do
-    [deep: false, global: false]
+  @doc """
+  Make any code fragment safe for being used as part of a matching expression.
+  Especially useful when an elixir code fragment evalutes to a string.
+
+  The following code sample yields an invalid expression ...
+
+      iex> import Exjpet.Expression
+      Exjpet.Expression
+      iex> a = "foo"
+      "foo"
+      iex> expr = list [a]
+      "[foo]"
+      iex> try do
+      ...>   Exjpet.compile(expr)
+      ...> rescue
+      ...>   e -> :invalid_expression
+      ...> end
+      :invalid_expression
+
+  ... whereas using `safe/1` produces the expected expression.
+      iex> import Exjpet.Expression
+      Exjpet.Expression
+      iex> a = "foo"
+      "foo"
+      iex> expr = list [safe(a)]
+      "[\\\"foo\\\"]"
+      iex> epm = Exjpet.compile(expr)
+      iex> Exjpet.run(["foo"], epm)
+      {true, %{}}
+  """
+  defmacro safe(frag) do
+    quote do
+      "#{inspect unquote(frag)}"
+    end
   end
 
-  defp transform({:with_key, key}) when is_binary(key) do
-    Macro.to_string(key) <> ":_"
-  end
+  defp default_modifiers, do: [deep: false, global: false]
 
   defp transform({:with_key, frag}) do
     quote do
@@ -130,10 +172,6 @@ defmodule Exjpet.Expression do
 
   defp transform({:with, [value: fragv, key: fragk]}) do
     transform({:with, [key: fragk, value: fragv]})
-  end
-
-  defp transform({:with_value, val}) when is_binary(val) do
-    "_:" <> Macro.to_string(val)
   end
 
   defp transform({:with_value, frag}) do

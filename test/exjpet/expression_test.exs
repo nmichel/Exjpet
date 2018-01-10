@@ -37,7 +37,7 @@ defmodule Exjpet.ExpressionTest do
   end
   
   @capname "val"
-  test "dynamic compile-time expressions" do
+  test "simple compile-time expressions" do
     assert capture(:any, as: @capname) == "(?<val>_)"
     
     defmodule Config do
@@ -45,25 +45,48 @@ defmodule Exjpet.ExpressionTest do
         42
       end
       def expr(p) do
-        list [:any, object(with_key: "#{inspect(p)}")]
+        list [:any, object(with_key: safe(p))]
       end
     end
 
     assert capture(Config.expr("foo"), as: @capname) == "(?<val>[_,{\"foo\":_}])"
     assert list([to_string(Config.num_param)]) == "[42]"
   end
-  
-  test "dynamic runtime expressions" do
+
+  test "simple runtime expressions" do
     get_name =
       fn name ->
         name
       end
     builder =
       fn name ->
-        object(with_key: "#{inspect get_name.(name)}")
+        object(with_key: safe(get_name.(name)))
         |> capture(as: get_name.(name))
       end
 
     assert builder.("foo") == "(?<foo>{\"foo\":_})"
+  end
+
+  test "advanced compile-time expressions" do
+    defmodule MyMacro do
+      defmacro match(name, what) do
+        quote bind_quoted: [name: name, what: what] do
+          def unquote(name)() do
+            unquote(what)
+          end
+        end
+      end
+    end
+
+    defmodule Foo do
+      import Exjpet.Expression
+      import MyMacro
+
+      [{:foo, object([with_key: "foo"])}, {:bar, list(["bar"])}]
+      |> Enum.each(fn({name, pattern}) -> match(name, pattern) end)
+    end
+
+    assert Foo.foo() == "{\"foo\":_}"
+    assert Foo.bar() == "[\"bar\"]"
   end
 end

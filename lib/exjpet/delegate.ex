@@ -9,7 +9,7 @@ defmodule Exjpet.Delegate do
   For illustration purpose it also exports a `foo` function.
 
       iex> defmodule MyMap do
-      ...>   use Exjpet.Delegate, :maps
+      ...>   use Exjpet.Delegate, to: :maps
       ...>   def foo do
       ...>     :foo
       ...>   end
@@ -39,13 +39,20 @@ defmodule Exjpet.Delegate do
       end
   """
 
-  defmacro __using__(module) do
+  @exclusions [{:module_info, 0}, {:module_info, 1}, {:__info__, 1}]
+
+  defmacro __using__(opts \\ [])
+
+  defmacro __using__(opts) do
+    module = Keyword.fetch!(opts, :to)
+    exclusions = Keyword.get(opts, :except, []) |> Keyword.merge(@exclusions)
+
     asts =
       module
       |> resolve()
       |> apply(:module_info, [])
       |> Keyword.fetch!(:exports)
-      |> Kernel.--([{:module_info, 0}, {:module_info, 1}, {:__info__, 1}])
+      |> Kernel.--(exclusions)
       |> Enum.map(&build_signature(&1, __CALLER__.module, module))
 
     quote do

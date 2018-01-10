@@ -1,5 +1,5 @@
 defmodule Exjpet do
-  use Exjpet.Delegate, :ejpet
+  use Exjpet.Delegate, to: :ejpet, except: [compile: 1]
 
   @moduledoc """
   Documentation for Exjpet.
@@ -11,13 +11,30 @@ defmodule Exjpet do
       iex> Exjpet.run(json, epm)
       {true, %{"cap" => [%{"a" => 42}]}}
   """
+
+  @doc """
+  Compile `expr` with `Poison` as JSON codec.
+
+  Same as Exjpet.compile(expr, :poison)
+
+      iex> epm = Exjpet.compile "[*]"
+      iex> Exjpet.backend epm
+      :poison
+  """
+  def compile(expr) do
+    compile(expr, :poison)
+  end
 end
 
 defmodule :ejpet_poison_generators do
+  @moduledoc false
+
   defdelegate generate_matcher(a, b, c), to: :ejpet_jsone_generators
 end
 
 defmodule :poison do
+  @moduledoc false
+
   def decode(text) do
     {:ok, json} = Poison.decode(text)
     json

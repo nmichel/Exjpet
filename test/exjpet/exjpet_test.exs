@@ -34,7 +34,15 @@ defmodule ExjpetTest do
     assert {:true, %{"cap" => [[1, 2, 3, 4], [false, 2, true, true], [10, 2, 30, 40]]}} == Exjpet.run(json, epm)
   end
 
-  test "infer codec with Exjpet.backend/1" do
+  test "Exjpet.compile/1 default to :poison" do
+    {:ok, json} =
+      "{\"foo\": [false, 2, true, true]}"
+      |> Poison.decode()
+    epm = Exjpet.compile("<(?<cap>[*, 2, *])>/g")
+    assert Exjpet.backend(epm) == :poison
+  end
+
+  test "get codec with Exjpet.backend/1" do
     epm = Exjpet.compile("<!(?<cap>[*, 2, *])!>/g", :poison)
     assert :poison = Exjpet.backend(epm)
   end
