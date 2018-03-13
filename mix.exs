@@ -7,6 +7,8 @@ defmodule Exjpet.Mixfile do
       version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
+      description: description(),
+      package: package(),
       deps: deps()
     ]
   end
@@ -14,6 +16,19 @@ defmodule Exjpet.Mixfile do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  defp description() do
+    "The easy way to ejpet for Elixir"
+  end
+
+  defp package() do
+    [
+      name: "exjpet",
+      maintainers: ["Nicolas Michel"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/nmichel/Exjpet"}
     ]
   end
 
