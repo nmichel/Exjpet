@@ -4,7 +4,7 @@ defmodule Exjpet.Mixfile do
   def project do
     [
       app: :exjpet,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
       description: description(),
@@ -34,6 +34,7 @@ defmodule Exjpet.Mixfile do
 
   defp deps do
     [
+      {:jason, "~> 1.0"},
       {:poison, "~> 3.1"},
       {:ejpet, "~> 0.7.0"},
       {:ex_doc, "~> 0.16", only: :dev, runtime: false},

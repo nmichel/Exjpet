@@ -8,8 +8,17 @@ defmodule Exjpet do
 
   ## Examples
 
+    with (default) Poison decoder / encoder ...
+
       iex> epm = Exjpet.compile("[1, *, (?<cap>{})]")
       iex> json = Exjpet.decode(~s([1, 2, {"a": 42}]), :poison)
+      iex> Exjpet.run(json, epm)
+      {true, %{"cap" => [%{"a" => 42}]}}
+      
+    ... or with Jason as decoder / encoder 
+  
+      iex> epm = Exjpet.compile("[1, *, (?<cap>{})]", :jason)
+      iex> json = Exjpet.decode(~s([1, 2, {"a": 42}]), :jason)
       iex> Exjpet.run(json, epm)
       {true, %{"cap" => [%{"a" => 42}]}}
   """
@@ -68,6 +77,26 @@ defmodule :poison do
 
   def encode(json) do
     {:ok, text} = Poison.encode(json)
+    text
+  end
+end
+
+defmodule :ejpet_jason_generators do
+  @moduledoc false
+
+  defdelegate generate_matcher(a, b, c), to: :ejpet_jsone_generators
+end
+
+defmodule :jason do
+  @moduledoc false
+
+  def decode(text) do
+    {:ok, json} = Jason.decode(text)
+    json
+  end
+
+  def encode(json) do
+    {:ok, text} = Jason.encode(json)
     text
   end
 end
