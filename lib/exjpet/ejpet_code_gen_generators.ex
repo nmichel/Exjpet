@@ -118,27 +118,29 @@ defmodule :ejpet_code_gen_generators do
   # ----- List
 
   def generate_matcher({:list, :empty}, _options, _cb) do
-    quote bind_quoted: [empty: Macro.escape(empty())] do
+    empty = Macro.escape(empty())
+    quote do
       fn([], _params) ->
-          {true, empty};
+          {true, unquote(empty)}
         (_, _params) ->
-          {false, empty}
+          {false, unquote(empty)}
       end
     end
   end
 
   def generate_matcher({:list, :any}, _Options, _CB) do
-    quote bind_quoted: [empty: Macro.escape(empty())] do
+    empty = Macro.escape(empty())
+    quote do
       fn([], _params) ->
-          {true, empty}
+          {true, unquote(empty)}
         ([{}], _params) -> # jsx special form for empty object
-          {false, empty}
+          {false, unquote(empty)}
         ([{_, _} |_], _params) -> # jsx form for non empty object
-          {false, empty}
+          {false, unquote(empty)}
         ([_|_], _params) ->
-          {true, empty}
+          {true, unquote(empty)}
         (_, _params) ->
-          {false, empty}
+          {false, unquote(empty)}
       end
     end
   end
@@ -298,16 +300,16 @@ defmodule :ejpet_code_gen_generators do
   end
 
   def generate_matcher(what, _options, _cb) when what in [true, false, :null] do
+    empty = Macro.escape(empty())
     quote location: :keep do
-      empty = unquote(Macro.escape(empty()))
       fn(item, _params) ->
         case item do
           nil when unquote(what) == :null ->
-            {true, empty}
+            {true, unquote(empty)}
           unquote(what) ->
-            {true, empty}
+            {true, unquote(empty)}
           _ ->
-            {false, empty}
+            {false, unquote(empty)}
         end
       end
     end
