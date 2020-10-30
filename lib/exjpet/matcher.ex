@@ -10,13 +10,6 @@ defmodule Exjpet.Matcher do
     end
   end
 
-  defmacro match(pattern, body) do
-    svar = Macro.var(:_, nil)
-    quote do
-      match(unquote(pattern), unquote(svar), unquote(body))
-    end
-  end
-
   defmacro match(pattern, state, do: code) do
     quote bind_quoted: [pattern: pattern,
                         state: Macro.escape(state),
