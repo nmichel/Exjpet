@@ -34,11 +34,13 @@ defmodule Exjpet.Mixfile do
 
   defp deps do
     [
-      {:jason, "~> 1.0"},
-      {:poison, "~> 3.1"},
-      {:ejpet, "~> 0.7.0"},
-      {:ex_doc, "~> 0.16", only: :dev, runtime: false},
-      {:httpoison, "~> 0.13.0", only: :test, runtime: false}
+      {:ejpet, path: "../ejpet"},
+      # {:ejpet, "~> 0.7.0"},
+      {:jsone, "~> 1.5"},
+      {:jason, "~> 1.2"},
+      {:poison, "~> 4.0"},
+      {:ex_doc, "~> 0.23", only: :dev, runtime: false},
+      {:httpoison, "~> 1.7", only: :test, runtime: false}
     ]
   end
 end
