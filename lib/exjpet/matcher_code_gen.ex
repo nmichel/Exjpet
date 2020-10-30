@@ -2,11 +2,19 @@ defmodule Exjpet.Matcher.CodeGen do
   defmacro __before_compile__(env) do
     opts = Module.get_attribute(env.module, :opts)
 
+    # TODO simpifly : there can't be several bodies with same pattern and state. If such a case happend, it should be
+    # flagged as an error and raise a warning.
     matchers =
       Module.get_attribute(env.module, :matchers)
       |> Enum.group_by(fn({pattern, state, _body}) -> {pattern, Macro.to_string(state)} end)
       |> Enum.map(fn({{pattern, _state_str}, matchers}) -> {pattern, Enum.map(matchers, &({elem(&1, 1), elem(&1, 2)}))} end)
 
+    # Generate AST of on_match function clauses. This function is called each time a
+    # JSON node matches one of the pattern expressions, passing this expression as first
+    # parameter for disambiguation.
+    #
+    # TODO : generate different fonctions, to avoid pattern matching on expression string.
+    #
     matcher_clauses =
       for {pattern, [{state, body}]} <- matchers do
         capture_vars = pattern |> extract_capture_names() |> build_bindings()
@@ -26,8 +34,9 @@ defmodule Exjpet.Matcher.CodeGen do
       |> Enum.uniq()
 
     Application.ensure_started(:ejpet)
-
     cache_fun = :ejpet_default_cache.build_cache_fun(:ejpet_default_cache_srv)
+
+    # Generate pattern matchers
     pattern_matcher_fun_mapping =
       for pattern <- patterns do
         if opts[:debug] do
@@ -38,6 +47,7 @@ defmodule Exjpet.Matcher.CodeGen do
         {pattern, :ejpet_code_gen_generators.build_function_name(key)}
       end
 
+    # Generate function for each sub matcher
     quoted_funs =
       for {key, quoted_fun} <- cache_fun.({:get_all}) do
         name = :ejpet_code_gen_generators.build_function_name(key)
@@ -47,42 +57,20 @@ defmodule Exjpet.Matcher.CodeGen do
         generate_matcher_fun(name, quoted_fun)
       end
 
-    static_matchings =
-      if not opts[:reduce] do
-        for {pattern, fun_name} <- pattern_matcher_fun_mapping do
-          quote do
-            if unquote(opts)[:debug] do
-              IO.puts("Testing node on matcher function #{unquote(fun_name)}")
-            end
-            case unquote(fun_name)(node, []) do
-              {true, captures} ->
-                on_match(unquote(pattern), state, node, captures)
-              _ -> :no_match
-            end
-          end
-        end
-      else
-        [
-          quote do
-            Enum.reduce(unquote(pattern_matcher_fun_mapping), [], fn({pattern, fun_name}, acc) ->
-              res =
-                case apply(__MODULE__, fun_name, [node, []]) do
-                  {true, captures} ->
-                    on_match(pattern, state, node, captures)
-                  _ -> :no_match
-                end
-              [res | acc]
-            end)
-            |> Enum.reverse()
-          end
-        ]
-      end
-
     quote location: :keep do
+      # inject all matchers (and submatchers) functions
       unquote_splicing(quoted_funs)
 
+      # generate main match/2 function
       def match(node, state) do
-        unquote_splicing(static_matchings)
+        state_0 = state
+        Enum.reduce(unquote(pattern_matcher_fun_mapping), state_0, fn({pattern, fun_name}, state_in) ->
+          res =
+            case apply(__MODULE__, fun_name, [node, []]) do
+              {true, captures} -> on_match(pattern, state_in, node, captures)
+              _ -> state_in
+            end
+        end)
       end
 
       def match_dyn(node, state) do
@@ -109,7 +97,11 @@ defmodule Exjpet.Matcher.CodeGen do
     end
   end
 
+  @spec generate_matcher_fun(String.t(), Macro.input()) :: Macro.output()
   defp generate_matcher_fun(name, body) do
+    # TODO : currently generates a named function which calls the generated
+    # anonymous function. Transform the generated anonymous function AST code
+    # into name function declaration.
     quote do
       def unquote(name)(node, opts) do
         inner_fun = unquote(body)

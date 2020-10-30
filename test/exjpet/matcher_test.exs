@@ -2,44 +2,43 @@
 defmodule Exjpet.MatcherTest.Test do
   use Exjpet.Matcher, [
     options: [number_strict_match: true],
-    reduce: true,
     debug: true
   ]
 
-  match "[]" do
-    :list_empty
+  match "[]", state do
+    [:list_empty | state]
   end
 
-  match "[*]" do
-    :list_any
+  match "[*]", state do
+    [:list_any | state]
   end
 
-  match "[true, false]" do
-    :list_true_false
+  match "[true, false]", state do
+    [:list_true_false | state]
   end
 
-  match "[null, _]" do
-    :list_null_any
+  match "[null, _]", state do
+    [:list_null_any | state]
   end
 
-  match "[_, _, [true, false], true]" do
-    :t_5
+  match "[_, _, [true, false], true]", state do
+    [:t_5 | state]
   end
 
-  match "\"foo\"" do
-    :t_6
+  match "\"foo\"", state do
+    [:t_6 | state]
   end
 
-  match "#\"foo\"" do
-    :t_7
+  match "#\"foo\"", state do
+    [:t_7 | state]
   end
 
-  match "42" do
-    :t_8
+  match "42", state do
+    [:t_8 | state]
   end
 
-  match "(?<full>[(?<first>_), (?<second>false), *])" do
-    {:t_9, full, first, second}
+  match "(?<full>[(?<first>_), (?<second>false), *])", state do
+    [{:t_9, full, first, second} | state]
   end
 
   # @pattern "[" <> "]"
@@ -82,6 +81,6 @@ defmodule Exjpet.MatcherTest do
 
   test "test" do
     node = Poison.decode!("[true, false]")
-    assert [{:t_9, [[true, false]], [true], [false]}, :no_match, :no_match, :no_match, :no_match, :no_match, :list_true_false, :list_any, :no_match] = Test.match(node, [])
+    assert [:list_any, :list_true_false, {:t_9, [[true, false]], [true], [false]}] = Test.match(node, [])
   end
 end
