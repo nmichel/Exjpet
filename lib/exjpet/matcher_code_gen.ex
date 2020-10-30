@@ -97,19 +97,6 @@ defmodule Exjpet.Matcher.CodeGen do
     end
   end
 
-  @spec generate_matcher_fun(String.t(), Macro.input()) :: Macro.output()
-  defp generate_matcher_fun(name, body) do
-    # TODO : currently generates a named function which calls the generated
-    # anonymous function. Transform the generated anonymous function AST code
-    # into name function declaration.
-    quote do
-      def unquote(name)(node, opts) do
-        inner_fun = unquote(body)
-        inner_fun.(node, opts)
-      end
-    end
-  end
-
   @spec extract_capture_names(String.t()) :: [String.t()]
   defp extract_capture_names(expr) do
     Regex.compile("\\(\\?<([A-Za-z0-9_]+)>")
@@ -129,5 +116,45 @@ defmodule Exjpet.Matcher.CodeGen do
         unquote(var_ast) = value
       end
     end)
+  end
+
+  @spec generate_matcher_fun(String.t(), Macro.input()) :: Macro.output()
+  defp generate_matcher_fun(name, {:fn, _context, fn_clauses}) do
+    # When possible, transform the generated anonymous function
+    # into the named function definition, thus avoiding the production of
+    # the latter as a "stub" function, which only role is to call the anonymous function.
+
+    module_fun_clauses = Enum.map(fn_clauses, &transform_clause(&1, name))
+    quote do
+      unquote_splicing(module_fun_clauses)
+    end
+  end
+
+  defp generate_matcher_fun(name, body) do
+    # Generate a named function acting as bridge for invoking
+    # the true anonymous  workhorse function.
+
+    quote do
+      def unquote(name)(node, opts) do
+        inner_fun = unquote(body)
+        inner_fun.(node, opts)
+      end
+    end
+  end
+
+  @spec transform_clause(Macro.input(), String.t()) :: Macro.output()
+  defp transform_clause({:->, _context, [[{:when, _, params_then_guards_list}], body]}, fun_name) do
+    [guard | reversed_params] = Enum.reverse(params_then_guards_list)
+    {:def, [context: __MODULE__, import: Kernel], [
+      {:when, [context: __MODULE__], [{fun_name, [], Enum.reverse(reversed_params)}, guard]},
+      [do: body]
+    ]}
+  end
+
+  defp transform_clause({:->, _context, [params_list, body]}, fun_name) do
+    {:def, [context: __MODULE__, import: Kernel], [
+      {fun_name, [context: __MODULE__], params_list},
+      [do: body]
+    ]}
   end
 end

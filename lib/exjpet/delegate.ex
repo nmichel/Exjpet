@@ -28,14 +28,14 @@ defmodule Exjpet.Delegate do
   Following declaration will compile
 
       defmodule DelegateToList do
-        use Exjpet.Delegate, List # ok
+        use Exjpet.Delegate, to: List # ok
       end
 
   But that one won't
 
       defmodule FailedDelegateToList do
         alias List, as: MyList
-        use Exjpet.Delegate, MyList # failed !
+        use Exjpet.Delegate, to: MyList # failed !
       end
   """
 
