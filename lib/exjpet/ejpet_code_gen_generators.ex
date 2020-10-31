@@ -115,6 +115,23 @@ defmodule :ejpet_code_gen_generators do
     end
   end
 
+  # ---- Object
+
+  def generate_matcher({:object, :any}, _options, _cb) do
+    empty = Macro.escape(empty())
+    quote do
+      fn(%{}, _params) ->
+          {true, unquote(empty)}
+        ([{}], _params) ->
+          {true, unquote(empty)}
+        ([{_, _} | _], _params) ->
+          {true, unquote(empty)}
+        (_, _params) ->
+          {false, unquote(empty)}
+      end
+    end
+  end
+
   # ----- List
 
   def generate_matcher({:list, :empty}, _options, _cb) do

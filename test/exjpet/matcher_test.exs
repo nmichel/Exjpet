@@ -41,6 +41,10 @@ defmodule Exjpet.MatcherTest.Test do
     [{:t_9, full, first, second} | state]
   end
 
+  match "{}", state do
+    [ :object_any | state]
+  end
+
   # @pattern "[" <> "]"
   # match @pattern, %{state: :list} do
   #   # Some non sense code
@@ -81,6 +85,10 @@ defmodule Exjpet.MatcherTest do
 
   test "test" do
     node = Poison.decode!("[true, false]")
-    assert [:list_any, :list_true_false, {:t_9, [[true, false]], [true], [false]}] = Test.match(node, [])
+    assert [:list_any, :list_true_false, {:t_9, [[true, false]], [true], [false]}] == Test.match(node, [])
+  end
+
+  test "match any object" do
+    assert [:object_any] == Test.match(Poison.decode!("{}"), [])
   end
 end
