@@ -132,6 +132,58 @@ defmodule :ejpet_code_gen_generators do
     end
   end
 
+  def generate_matcher({:object, conditions}, options, cb) do
+    pair_matcher_names =
+      Enum.map(conditions, fn(expr = {_, key}) ->
+        _ = cb.(expr, options, cb)
+        build_function_name(key)
+      end)
+
+    empty = Macro.escape(empty())
+
+    quote do
+      fn(m = %{}, params) ->
+          :ejpet_code_gen_generators.do_match_object(Map.to_list(m), params, __MODULE__, unquote(pair_matcher_names));
+        (items, params) when is_list(items) ->
+          :ejpet_code_gen_generators.do_match_object(items, params, __MODULE__, unquote(pair_matcher_names));
+        (_, _params) ->
+          {false, unquote(empty)}
+      end
+    end
+  end
+
+  def generate_matcher({:pair, :any, val_matcher_desc}, options, cb) do
+    {_, key} = val_matcher_desc
+    _ = cb.(val_matcher_desc, options, cb)
+    val_matcher_name = build_function_name(key)
+
+    empty = Macro.escape(empty())
+
+    quote do
+      fn({_key, val}, params) ->
+          unquote(val_matcher_name)(val, params)
+        (_, _Params) ->
+          {false, unquote(empty)}
+      end
+    end
+  end
+
+  def generate_matcher({:pair, key_matcher_desc, :any}, options, cb) do
+    {_, key} = key_matcher_desc
+    _ = cb.(key_matcher_desc, options, cb)
+    key_matcher_name = build_function_name(key)
+
+    empty = Macro.escape(empty())
+
+    quote do
+      fn({key, _val}, params) ->
+          unquote(key_matcher_name)(key, params)
+        (_, _params) ->
+          {false, unquote(empty)}
+      end
+    end
+  end
+
   # ----- List
 
   def generate_matcher({:list, :empty}, _options, _cb) do
@@ -223,11 +275,11 @@ defmodule :ejpet_code_gen_generators do
   def generate_matcher({:find, expr}, options, cb) do
     {_, key} = expr
     _ = cb.(expr, options, cb)
-    span_matcher = build_function_name(key)
+    span_matcher_name = build_function_name(key)
 
     quote do
       fn(span, params) ->
-        continue_until_span_match(span, __MODULE__, unquote(span_matcher), params)
+        continue_until_span_match(span, __MODULE__, unquote(span_matcher_name), params)
       end
     end
   end
@@ -358,6 +410,55 @@ defmodule :ejpet_code_gen_generators do
       {true, cap} ->
         check_span_match(rest, module, tail, params, [cap | acc], strict)
     end
+  end
+
+  def continue_until_span_match([], _module, _span_matcher, _params) do
+    {{false, empty()}, []}
+  end
+
+  def continue_until_span_match(what = [_ | tail], module, span_matcher, params) do
+    stat = apply(module, span_matcher, [what, params])
+    case stat do
+      {{true, _}, _} = r ->
+        r
+      _ ->
+        continue_until_span_match(tail, module, span_matcher, params)
+    end
+  end
+
+  def continue_until_match([], _module, _matcher, _params) do
+    {{false, empty()}, []}
+  end
+
+  def continue_until_match([item | tail], module, matcher, params) do
+    stat = apply(module, matcher, [item, params])
+    case stat do
+      {true, _} = r ->
+        {r, tail}
+      _ ->
+        continue_until_match(tail, module, matcher, params)
+    end
+  end
+
+  def do_match_object(items = [{_,_} | _], params, module, pair_matcher_names) do
+    r = Enum.map(pair_matcher_names, &continue_until_match(items, module, &1, params))
+    {acc_captures, acc_failed_count} =
+      Enum.reduce(r, {empty(), 0},
+        fn({{true, captures}, _}, {cap_acc, failed_acc}) ->
+            {melt_captures(cap_acc, captures), failed_acc}
+          (_, {cap_acc, failed_acc}) ->
+            {cap_acc, failed_acc + 1}
+        end)
+    case acc_failed_count do
+      0 ->
+        {true, acc_captures}
+      _ ->
+        {false, empty()}
+    end
+  end
+
+  def do_match_object(_, _params, _module, _pair_matcher_names) do
+    {false, empty()}
   end
 
   def empty(), do: %{}

@@ -42,7 +42,19 @@ defmodule Exjpet.MatcherTest.Test do
   end
 
   match "{}", state do
-    [ :object_any | state]
+    [:object_any | state]
+  end
+
+  match ~s({"foo":_}), state do
+    [:object_key_any_value | state]
+  end
+
+  match ~s({_: [42]}), state do
+    [:object_any_key_value | state]
+  end
+
+  match ~s({_: [42], _: false, "foo": _}), state do
+    [:object_many_conds | state]
   end
 
   # @pattern "[" <> "]"
@@ -90,5 +102,23 @@ defmodule Exjpet.MatcherTest do
 
   test "match any object" do
     assert [:object_any] == Test.match(Poison.decode!("{}"), [])
+  end
+
+  test "match object by key" do
+    assert [:object_any, :object_key_any_value] == Test.match(Poison.decode!(~s({"foo": 42})), [])
+    assert [:object_any, :object_key_any_value] == Test.match(Poison.decode!(~s({"foo": []})), [])
+    assert [:object_any] == Test.match(Poison.decode!(~s({"notfoo": 42})), [])
+  end
+
+  test "match object by value" do
+    assert [:object_any, :object_key_any_value, :object_any_key_value] == Test.match(Poison.decode!(~s({"foo": [42]})), [])
+    assert [:object_any, :object_any_key_value] == Test.match(Poison.decode!(~s({"other_key": [42]})), [])
+    assert [:object_any] == Test.match(Poison.decode!(~s({"notfoo": 42})), [])
+  end
+
+  test "match object several conditions" do
+    assert [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds] == Test.match(Poison.decode!(~s({"foo": [42], "bar": false})), [])
+    assert [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": false, "foo": {}})), [])
+    refute [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": true, "foo": {}})), [])
   end
 end
