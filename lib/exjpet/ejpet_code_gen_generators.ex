@@ -184,6 +184,33 @@ defmodule :ejpet_code_gen_generators do
     end
   end
 
+  def generate_matcher({:pair, key_matcher_desc, val_matcher_desc}, options, cb) do
+    {_, key_matcher_key} = key_matcher_desc
+    _ = cb.(key_matcher_desc, options, cb)
+    key_matcher_name = build_function_name(key_matcher_key)
+
+    {_, val_matcher_key} = val_matcher_desc
+    _ = cb.(val_matcher_desc, options, cb)
+    val_matcher_name = build_function_name(val_matcher_key)
+
+    empty = Macro.escape(empty())
+
+    quote do
+      fn({key, val}, params) ->
+          {s1, cap1} = unquote(key_matcher_name)(key, params)
+          {s2, cap2} = unquote(val_matcher_name)(val, params)
+          case s1 and s2 do
+            true ->
+              {true, unquote(__MODULE__).melt_captures(cap1, cap2)}
+            _ ->
+              {false, unquote(empty)}
+          end
+        (_, _params) ->
+          {false, unquote(empty)}
+      end
+    end
+  end
+
   # ----- List
 
   def generate_matcher({:list, :empty}, _options, _cb) do
@@ -265,9 +292,9 @@ defmodule :ejpet_code_gen_generators do
         build_function_name(key)
       end)
 
-    quote bind_quoted: [matchers: matchers, strict: strict] do
+    quote do
       fn(span, params) when is_list(span) ->
-        :ejpet_code_gen_generators.check_span_match(span, __MODULE__, matchers, params, [], strict)
+        :ejpet_code_gen_generators.check_span_match(span, __MODULE__, unquote(matchers), params, [], unquote(strict))
       end
     end
   end

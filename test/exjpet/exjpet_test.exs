@@ -35,7 +35,7 @@ defmodule ExjpetTest do
   end
 
   test "Exjpet.compile/1 default to :poison" do
-    {:ok, json} =
+    {:ok, _json} =
       "{\"foo\": [false, 2, true, true]}"
       |> Poison.decode()
     epm = Exjpet.compile("<(?<cap>[*, 2, *])>/g")

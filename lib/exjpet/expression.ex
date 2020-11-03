@@ -47,7 +47,7 @@ defmodule Exjpet.Expression do
       "{_:{\\\"neh\\\":42},\\\"foo\\\":_}"
   """
   defmacro object(constraints \\ [])
-  
+
   defmacro object(constraints) do
     constraints = Enum.map(constraints, &transform/1)
     quote do
@@ -127,7 +127,7 @@ defmodule Exjpet.Expression do
       iex> try do
       ...>   Exjpet.compile(expr)
       ...> rescue
-      ...>   e -> :invalid_expression
+      ...>   _e -> :invalid_expression
       ...> end
       :invalid_expression
 
