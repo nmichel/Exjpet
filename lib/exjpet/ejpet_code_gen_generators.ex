@@ -26,17 +26,17 @@ defmodule :ejpet_code_gen_generators do
   end
 
   def generate_matcher({:inject, :boolean, name}, _options, _cb) do
+    empty = Macro.escape(empty())
     quote do
-      empty = unquote(Macro.escape(empty()))
       fn(what, params) when what == true or what == false ->
         case :ejpet_helpers.get_value(unquote(name), params) do
-          what ->
-            {true, empty}
+          ^what ->
+            {true, unquote(empty)}
           _ ->
-            {false, empty}
+            {false, unquote(empty)}
         end
         (_, _params) ->
-          {false, empty}
+          {false, unquote(empty)}
       end
     end
   end
@@ -46,7 +46,7 @@ defmodule :ejpet_code_gen_generators do
       empty = unquote(Macro.escape(empty()))
       fn(what, params) when is_binary(what) ->
         case :ejpet_helpers.get_value(unquote(name), params) do
-          what ->
+          ^what ->
             {true, empty}
           _ ->
             {false, empty}
@@ -306,7 +306,7 @@ defmodule :ejpet_code_gen_generators do
 
     quote do
       fn(span, params) ->
-        continue_until_span_match(span, __MODULE__, unquote(span_matcher_name), params)
+        unquote(__MODULE__).continue_until_span_match(span, __MODULE__, unquote(span_matcher_name), params)
       end
     end
   end
