@@ -61,6 +61,10 @@ defmodule Exjpet.MatcherTest.Test do
     [:object_key_and_value | state]
   end
 
+  match ~s{(?<cap>false)}, state do
+    [captures | state]
+  end
+
   # @pattern "[" <> "]"
   # match @pattern, %{state: :list} do
   #   # Some non sense code
@@ -128,5 +132,9 @@ defmodule Exjpet.MatcherTest do
     assert [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds, :object_key_and_value] == Test.match(Poison.decode!(~s({"foo": [42], "bar": false})), [])
     assert [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": false, "foo": {}})), [])
     refute [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": true, "foo": {}})), [])
+  end
+
+  test "capture" do
+    assert [%{"cap" => [false]}] == Test.match(Poison.decode!(~s(false)), [])
   end
 end

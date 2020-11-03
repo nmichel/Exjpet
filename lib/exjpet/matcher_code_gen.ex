@@ -62,11 +62,11 @@ defmodule Exjpet.Matcher.CodeGen do
       unquote_splicing(quoted_funs)
 
       # generate main match/2 function
-      def match(node, state) do
+      def match(node, state, params \\ %{}) do
         state_0 = state
         Enum.reduce(unquote(pattern_matcher_fun_mapping), state_0, fn({pattern, fun_name}, state_in) ->
           res =
-            case apply(__MODULE__, fun_name, [node, []]) do
+            case apply(__MODULE__, fun_name, [node, params]) do
               {true, captures} -> on_match(pattern, state_in, node, captures)
               _ -> state_in
             end
