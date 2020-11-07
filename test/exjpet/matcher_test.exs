@@ -65,6 +65,10 @@ defmodule Exjpet.MatcherTest.Test do
     [captures | state]
   end
 
+  match ~s(<>), state do
+    [:iterable_any]
+  end
+
   # @pattern "[" <> "]"
   # match @pattern, %{state: :list} do
   #   # Some non sense code
@@ -136,5 +140,9 @@ defmodule Exjpet.MatcherTest do
 
   test "capture" do
     assert [%{"cap" => [false]}] == Test.match(Poison.decode!(~s(false)), [])
+  end
+
+  test "iterable" do
+    assert [:object_any, :iterable_any] == Test.match(Poison.decode!(~s([])), [])
   end
 end

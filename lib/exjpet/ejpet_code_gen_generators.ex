@@ -143,9 +143,9 @@ defmodule :ejpet_code_gen_generators do
 
     quote do
       fn(m = %{}, params) ->
-          :ejpet_code_gen_generators.do_match_object(Map.to_list(m), params, __MODULE__, unquote(pair_matcher_names));
+          :ejpet_code_gen_generators.do_match_object(Map.to_list(m), params, __MODULE__, unquote(pair_matcher_names))
         (items, params) when is_list(items) ->
-          :ejpet_code_gen_generators.do_match_object(items, params, __MODULE__, unquote(pair_matcher_names));
+          :ejpet_code_gen_generators.do_match_object(items, params, __MODULE__, unquote(pair_matcher_names))
         (_, _params) ->
           {false, unquote(empty)}
       end
@@ -224,7 +224,7 @@ defmodule :ejpet_code_gen_generators do
     end
   end
 
-  def generate_matcher({:list, :any}, _Options, _CB) do
+  def generate_matcher({:list, :any}, _options, _cb) do
     empty = Macro.escape(empty())
     quote do
       fn([], _params) ->
@@ -307,6 +307,45 @@ defmodule :ejpet_code_gen_generators do
     quote do
       fn(span, params) ->
         unquote(__MODULE__).continue_until_span_match(span, __MODULE__, unquote(span_matcher_name), params)
+      end
+    end
+  end
+
+  # ----- Iterable
+
+  def generate_matcher({:iterable, :any}, _options, _cb) do
+    empty = Macro.escape(empty())
+    quote do
+      # jsone represents both list and object as erlang lists.
+      # Therefore, checking if an item is an erlang list is enough to say
+      # that it is an iterable.
+      #
+      fn(what, _params) when is_list(what) ->
+          {true, unquote(empty)}
+        (%{} = what, _params) ->
+          {true, unquote(empty)}
+        (what, _params) ->
+          {false, unquote(empty)}
+      end
+    end
+  end
+
+  def generate_matcher({:iterable, conditions, flags}, options, cb) do
+    matcher_names =
+      Enum.map(conditions, fn(expr = {_, key}) ->
+        _ = cb.(expr, options, cb)
+        build_function_name(key)
+      end)
+
+    empty = Macro.escape(empty())
+
+    quote do
+      fn(m = %{}, params) ->
+          unquote(__MODULE__).do_match_iterable(Map.to_list(m), params, __MODULE__, unquote(matcher_names), unquote(flags))
+        (items, params) when is_list(items) ->
+          unquote(__MODULE__).do_match_iterable(items, params, __MODULE__, unquote(matcher_names), unquote(flags))
+        (_, _params) ->
+          {false, unquote(empty)}
       end
     end
   end
@@ -467,6 +506,60 @@ defmodule :ejpet_code_gen_generators do
     end
   end
 
+  def continue_until_value_match([{}], _module, _matcher, _params, _flags) do
+    {{false, empty()}, []}
+  end
+
+  def continue_until_value_match([], _module, _matcher, _params, _flags) do
+    {{false, empty()}, []}
+  end
+
+  def continue_until_value_match(iterable, module, matcher, params, true) do
+    {continue_until_end_(iterable, module, matcher, params), []}
+  end
+
+  def continue_until_value_match([{_key, val} | tail], module, matcher, params, false) do
+    stat = apply(module, matcher, [val, params])
+    case stat do
+      r = {true, _} ->
+        {r, tail}
+      _ ->
+        continue_until_value_match(tail, module, matcher, params, false)
+    end
+  end
+
+  def continue_until_value_match([item | tail], module, matcher, params, false) do
+    stat = apply(module, matcher, [item, params])
+    case stat do
+      r = {true, _} ->
+        {r, tail}
+      _ ->
+        continue_until_value_match(tail, module, matcher, params, false)
+    end
+  end
+
+  def continue_until_end_(iterable, module, matcher, params) do
+    continue_until_end_(iterable, module, matcher, params, {false, empty()})
+  end
+
+  def continue_until_end_([{}], _module, _matcher, _params, acc) do
+    acc
+  end
+
+  def continue_until_end_([], _module, _matcher, _params, acc) do
+    acc
+  end
+
+  def continue_until_end_([{_Key, val} | tail], module, matcher, params, {acc_status, acc_captures}) do
+    {local_status, local_captures} = apply(module, matcher, [val, params])
+    continue_until_end_(tail, module, matcher, params, {local_status or acc_status, melt_captures(acc_captures, local_captures)})
+  end
+
+  def continue_until_end_([item | tail], module, matcher, params, {acc_status, acc_captures}) do
+    {local_status, local_captures} = apply(module, matcher, [item, params])
+    continue_until_end_(tail, module, matcher, params, {local_status or acc_status, melt_captures(acc_captures, local_captures)})
+  end
+
   def do_match_object(items = [{_,_} | _], params, module, pair_matcher_names) do
     r = Enum.map(pair_matcher_names, &continue_until_match(items, module, &1, params))
     {acc_captures, acc_failed_count} =
@@ -486,6 +579,23 @@ defmodule :ejpet_code_gen_generators do
 
   def do_match_object(_, _params, _module, _pair_matcher_names) do
     {false, empty()}
+  end
+
+  def do_match_iterable(items, params, module, matcher_names, flags) do
+    r = Enum.map(matcher_names, &continue_until_value_match(items, module, &1, params, flags))
+    {acc_captures, acc_failed_count} =
+      Enum.reduce(r, {empty(), 0},
+        fn({{true, captures}, _}, {cap_acc, failed_acc}) ->
+            {melt_captures(cap_acc, captures), failed_acc}
+          (_, {cap_acc, failed_acc}) ->
+            {cap_acc, failed_acc + 1}
+      end)
+    case acc_failed_count do
+      0 ->
+        {true, acc_captures};
+      _ ->
+        {false, empty()}
+    end
   end
 
   def empty(), do: %{}

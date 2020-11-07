@@ -6,11 +6,11 @@ defmodule Exjpet.TestTest do
 
   for {%{"pattern" => pattern, "tests" => tests}, j} <- Enum.with_index(test_descs) do
     describe "Pattern #{pattern} [#{j}] =>" do
-      module_name = :"Test_#{Base.encode16(pattern, case: :lower)}_#{j}"
+      module_name = :"Test_#{Base.encode16(:crypto.hash(:md5, pattern), case: :lower)}_#{j}"
       code =
         quote do
           defmodule unquote(module_name) do
-            use Exjpet.Matcher
+            use Exjpet.Matche
 
             match unquote(pattern), _state do
               {true, var!(captures)}
@@ -27,15 +27,22 @@ defmodule Exjpet.TestTest do
           inject = Poison.encode!(inject)
           status = Poison.encode!(status)
           captures = Poison.encode!(captures)
-          name = "#{inspect(node)} x inject #{inspect(inject)} => {#{inspect(status)}, #{inspect(captures)}} [#{i}]"
-
+#          name = "#{inspect(node)} x inject #{inspect(inject)} => {#{inspect(status)}, #{inspect(captures)}} [#{i}]"
+          name = "#{i}"
           test name do
             node = Poison.decode!(unquote(node))
             inject = Poison.decode!(unquote(inject))
             status = Poison.decode!(unquote(status))
             captures = Poison.decode!(unquote(captures))
             {s, real_c} = unquote(module).match(node, {false, %{}}, inject)
-            assert {status, captures} == {s, real_c}
+
+            message =
+            """
+            * pattern #{unquote(pattern)} / test #{inspect(node)} / inject #{inspect(inject)}
+              expected {#{inspect(status)}, #{inspect(captures)}}
+              got {#{inspect(s)}, #{inspect(real_c)}}
+            """
+            assert {status, captures} == {s, real_c}, message
           end
         end
       rescue

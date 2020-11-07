@@ -5,10 +5,11 @@ defmodule Exjpet.CodeGenValidationTest do
   test "validation test suite" do
     {:ok, resp} = HTTPoison.get("https://gist.githubusercontent.com/nmichel/8b0d6f194e89abb7281d/raw/907027e8d0be034433e1f56661a6a4fa3292daff/validation_tests.json")
     test_descs = Poison.decode!(resp.body)
-    for %{"pattern" => pattern, "tests" => tests} <- test_descs do
+    for {%{"pattern" => pattern, "tests" => tests}, j} <- Enum.with_index(test_descs) do
+      module_name = :"Test_#{Base.encode16(pattern, case: :lower)}_#{j}"
       code =
         quote do
-          defmodule Test do
+          defmodule unquote(module_name) do
             use Exjpet.Matcher
 
             match unquote(pattern), _state do
