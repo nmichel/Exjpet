@@ -14,9 +14,9 @@ defmodule Exjpet do
       iex> json = Exjpet.decode(~s([1, 2, {"a": 42}]), :poison)
       iex> Exjpet.run(json, epm)
       {true, %{"cap" => [%{"a" => 42}]}}
-      
-    ... or with Jason as decoder / encoder 
-  
+
+    ... or with Jason as decoder / encoder
+
       iex> epm = Exjpet.compile("[1, *, (?<cap>{})]", :jason)
       iex> json = Exjpet.decode(~s([1, 2, {"a": 42}]), :jason)
       iex> Exjpet.run(json, epm)
@@ -53,7 +53,7 @@ defmodule Exjpet do
 
   Same as `Exjpet.encode(json, :poison)`
 
-      iex> Exjpet.encode %{foo: 42 }
+      iex> Exjpet.encode %{foo: 42}
       "{\\\"foo\\\":42}"
   """
   def encode(json) do
@@ -81,6 +81,18 @@ defmodule :poison do
   end
 end
 
+defmodule :ejpet_poison_codec do
+  @moduledoc false
+
+  def decode(text) do
+    :poison.decode(text)
+  end
+
+  def encode(json) do
+    :poison.encode(json)
+  end
+end
+
 defmodule :ejpet_jason_generators do
   @moduledoc false
 
@@ -98,5 +110,17 @@ defmodule :jason do
   def encode(json) do
     {:ok, text} = Jason.encode(json)
     text
+  end
+end
+
+defmodule :ejpet_jason_codec do
+  @moduledoc false
+
+  def decode(text) do
+    :jason.decode(text)
+  end
+
+  def encode(json) do
+    :jason.encode(json)
   end
 end
