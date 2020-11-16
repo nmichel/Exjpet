@@ -10,7 +10,7 @@ defmodule Exjpet.TestTest do
       code =
         quote do
           defmodule unquote(module_name) do
-            use Exjpet.Matche
+            use Exjpet.Matcher
 
             match unquote(pattern), _state do
               {true, var!(captures)}
