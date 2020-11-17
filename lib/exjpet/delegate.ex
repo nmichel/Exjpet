@@ -63,7 +63,7 @@ defmodule Exjpet.Delegate do
   defp resolve({:__aliases__, _ctxt, names}) do
     names
     |> Enum.join(".")
-    |> (&("Elixir."<>&1)).()
+    |> (& "Elixir.#{&1}").()
     |> to_string()
     |> String.to_atom()
   end

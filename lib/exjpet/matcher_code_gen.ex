@@ -1,4 +1,6 @@
 defmodule Exjpet.Matcher.CodeGen do
+  @moduledoc false
+
   defmacro __before_compile__(env) do
     opts = Module.get_attribute(env.module, :opts)
 

@@ -11,7 +11,7 @@ defmodule :ejpet_code_gen_generators do
       fn(json, params) ->
         case unquote(matcher)(json, params) do
           {true, captures} ->
-            {true, :ejpet_code_gen_generators.add_captures(captures, unquote(name), [json])};
+            {true, :ejpet_code_gen_generators.add_captures(captures, unquote(name), [json])}
           r ->
             r
         end
@@ -134,7 +134,7 @@ defmodule :ejpet_code_gen_generators do
 
   def generate_matcher({:object, conditions}, options, cb) do
     pair_matcher_names =
-      Enum.map(conditions, fn(expr = {_, key}) ->
+      Enum.map(conditions, fn({_, key} = expr) ->
         _ = cb.(expr, options, cb)
         build_function_name(key)
       end)
@@ -162,7 +162,7 @@ defmodule :ejpet_code_gen_generators do
     quote do
       fn({_key, val}, params) ->
           unquote(val_matcher_name)(val, params)
-        (_, _Params) ->
+        (_, _params) ->
           {false, unquote(empty)}
       end
     end
@@ -243,7 +243,7 @@ defmodule :ejpet_code_gen_generators do
 
   def generate_matcher({:list, conditions}, options, cb) do
     matcher_names =
-      Enum.map(conditions, fn(expr = {_, key}) ->
+      Enum.map(conditions, fn({_, key} = expr) ->
         _ = cb.(expr, options, cb)
         build_function_name(key)
       end)
@@ -287,7 +287,7 @@ defmodule :ejpet_code_gen_generators do
 
   def generate_matcher({:span, exprs, strict}, options, cb) do
     matchers =
-      Enum.map(exprs, fn(expr = {_, key}) ->
+      Enum.map(exprs, fn({_, key} = expr) ->
         _ = cb.(expr, options, cb)
         build_function_name(key)
       end)
@@ -332,7 +332,7 @@ defmodule :ejpet_code_gen_generators do
 
   def generate_matcher({:iterable, conditions, flags}, options, cb) do
     matcher_names =
-      Enum.map(conditions, fn(expr = {_, key}) ->
+      Enum.map(conditions, fn({_, key} = expr) ->
         _ = cb.(expr, options, cb)
         build_function_name(key)
       end)
@@ -340,7 +340,7 @@ defmodule :ejpet_code_gen_generators do
     empty = Macro.escape(empty())
 
     quote do
-      fn(m = %{}, params) ->
+      fn(%{} = m, params) ->
           unquote(__MODULE__).do_match_iterable(Map.to_list(m), params, __MODULE__, unquote(matcher_names), unquote(flags))
         (items, params) when is_list(items) ->
           unquote(__MODULE__).do_match_iterable(items, params, __MODULE__, unquote(matcher_names), unquote(flags))
@@ -354,7 +354,7 @@ defmodule :ejpet_code_gen_generators do
 
   def generate_matcher({:descendant, conditions, flags}, options, cb) do
     matcher_names =
-      Enum.map(conditions, fn(expr = {_, key}) ->
+      Enum.map(conditions, fn({_, key} = expr) ->
         _ = cb.(expr, options, cb)
         build_function_name(key)
       end)
@@ -362,7 +362,7 @@ defmodule :ejpet_code_gen_generators do
     empty = Macro.escape(empty())
 
     quote do
-      fn(m = %{}, params) ->
+      fn(%{} = m, params) ->
             unquote(__MODULE__).do_match_descendant(Map.to_list(m), params, __MODULE__, unquote(matcher_names), unquote(flags))
           (items, params) when is_list(items) ->
             unquote(__MODULE__).do_match_descendant(items, params, __MODULE__, unquote(matcher_names), unquote(flags))
@@ -504,7 +504,7 @@ defmodule :ejpet_code_gen_generators do
     {{false, empty()}, []}
   end
 
-  def continue_until_span_match(what = [_ | tail], module, span_matcher, params) do
+  def continue_until_span_match([_ | tail] = what, module, span_matcher, params) do
     stat = apply(module, span_matcher, [what, params])
     case stat do
       {{true, _}, _} = r ->
@@ -594,7 +594,7 @@ defmodule :ejpet_code_gen_generators do
     {{false, empty()}, []}
   end
 
-  def deep_continue_until_value_match(m = %{}, module, matcher, params, flags) do
+  def deep_continue_until_value_match(%{} = m, module, matcher, params, flags) do
     deep_continue_until_value_match(Map.to_list(m), module, matcher, params, flags)
   end
 
@@ -604,61 +604,49 @@ defmodule :ejpet_code_gen_generators do
 
   def deep_continue_until_value_match([{_key, val} | tail], module, matcher, params, flags) do
     case apply(module, matcher, [val, params]) do
-      r = {true, _} ->
+      {true, _} = r ->
         {r, tail}
       _ ->
-        case val do
-          %{} when map_size(val) > 0 ->
-            case deep_continue_until_value_match(val, module, matcher, params, flags) do
-              {r2 = {true, _}, _} ->
-                {r2, tail}
-              _ ->
-                deep_continue_until_value_match(tail, module, matcher, params, flags)
-            end
-          [_|_] ->
-            case deep_continue_until_value_match(val, module, matcher, params, flags) do
-              {r2 = {true, _}, _} ->
-                {r2, tail}
-              _ ->
-                deep_continue_until_value_match(tail, module, matcher, params, flags)
-            end
-          _ ->
-            deep_continue_until_value_match(tail, module, matcher, params, flags)
-        end
+        deep_continue_after_non_value_match(val, tail, module, matcher, params, flags)
     end
   end
 
   def deep_continue_until_value_match([item | tail], module, matcher, params, flags) do
     case apply(module, matcher, [item, params]) do
-      r = {true, _} ->
+      {true, _} = r ->
         {r, tail}
       _ ->
-        case item do
-          %{} when map_size(item) > 0 ->
-            case deep_continue_until_value_match(item, module, matcher, params, flags) do
-              {r2 = {true, _}, _} ->
-                {r2, tail}
-              _ ->
-                deep_continue_until_value_match(tail, module, matcher, params, flags)
-            end
-          [_|_] ->
-            case deep_continue_until_value_match(item, module, matcher, params, flags) do
-              {r2 = {true, _}, _} ->
-                {r2, tail}
-              _ ->
-                deep_continue_until_value_match(tail, module, matcher, params, flags)
-            end
-          _ ->
-            deep_continue_until_value_match(tail, module, matcher, params, flags)
-        end
+        deep_continue_after_non_value_match(item, tail, module, matcher, params, flags)
+      end
+  end
+
+  defp deep_continue_after_non_value_match(%{} = item, tail, module, matcher, params, flags) when map_size(item) > 0 do
+    case deep_continue_until_value_match(item, module, matcher, params, flags) do
+      {{true, _} = r2, _} ->
+        {r2, tail}
+      _ ->
+        deep_continue_until_value_match(tail, module, matcher, params, flags)
     end
+  end
+
+  defp deep_continue_after_non_value_match([_|_] = item, tail, module, matcher, params, flags) do
+    case deep_continue_until_value_match(item, module, matcher, params, flags) do
+      {{true, _} = r2, _} ->
+        {r2, tail}
+      _ ->
+        deep_continue_until_value_match(tail, module, matcher, params, flags)
+    end
+  end
+
+  defp deep_continue_after_non_value_match(_item, tail, module, matcher, params, flags) do
+    deep_continue_until_value_match(tail, module, matcher, params, flags)
   end
 
   def deep_continue_until_end_(iterable, module, matcher, params) do
     deep_continue_until_end_(iterable, module, matcher, params, {false, empty()})
   end
 
-  def deep_continue_until_end_(m = %{}, _module, _matcher, _params, acc) when map_size(m) == 0 do
+  def deep_continue_until_end_(%{} = m, _module, _matcher, _params, acc) when map_size(m) == 0 do
     acc
   end
 
@@ -670,7 +658,7 @@ defmodule :ejpet_code_gen_generators do
     acc
   end
 
-  def deep_continue_until_end_(m = %{}, module, matcher, params, acc) do
+  def deep_continue_until_end_(%{} = m, module, matcher, params, acc) do
     deep_continue_until_end_(Map.to_list(m), module, matcher, params, acc)
   end
 
@@ -678,7 +666,7 @@ defmodule :ejpet_code_gen_generators do
     {local_status, local_captures} = apply(module, matcher, [val, params])
     local_acc = {local_status or acc_status, melt_captures(acc_captures, local_captures)}
     case val do
-        m = %{} when map_size(m) >= 0 ->
+        %{} = m when map_size(m) >= 0 ->
             r = deep_continue_until_end_(val, module, matcher, params, local_acc)
             deep_continue_until_end_(tail, module, matcher, params, r)
         [_|_] ->
@@ -704,7 +692,7 @@ defmodule :ejpet_code_gen_generators do
     end
   end
 
-  def do_match_object(items = [{_,_} | _], params, module, pair_matcher_names) do
+  def do_match_object([{_, _} | _] = items, params, module, pair_matcher_names) do
     r = Enum.map(pair_matcher_names, &continue_until_match(items, module, &1, params))
     {acc_captures, acc_failed_count} =
       Enum.reduce(r, {empty(), 0},
@@ -763,7 +751,7 @@ defmodule :ejpet_code_gen_generators do
     {false, empty()}
   end
 
-  def empty(), do: %{}
+  def empty, do: %{}
 
   def melt_captures(empty, c) when map_size(empty) == 0 do
     c

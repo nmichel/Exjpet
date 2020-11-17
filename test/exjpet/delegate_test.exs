@@ -35,7 +35,7 @@ defmodule Exjpet.DelegateTest do
     defmodule Target3 do
       use Exjpet.Delegate, to: Exjpet.DelegateTest.Source
 
-      def foo() do
+      def foo do
         :foo
       end
     end
@@ -47,7 +47,7 @@ defmodule Exjpet.DelegateTest do
     defmodule Target3 do
       use Exjpet.Delegate, to: Exjpet.DelegateTest.Source, except: [neh: 0, neh: 2]
 
-      def foo() do
+      def foo do
         :foo
       end
     end

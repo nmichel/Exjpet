@@ -100,7 +100,6 @@ defmodule Exjpet.MatcherTest.Test do
   # end
 end
 
-
 defmodule Exjpet.MatcherTest do
   use ExUnit.Case
   doctest Exjpet.Matcher

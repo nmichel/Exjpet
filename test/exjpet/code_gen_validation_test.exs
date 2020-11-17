@@ -1,7 +1,6 @@
 defmodule Exjpet.CodeGenValidationTest do
   use ExUnit.Case
 
-
   test "validation test suite" do
     {:ok, resp} = HTTPoison.get("https://gist.githubusercontent.com/nmichel/8b0d6f194e89abb7281d/raw/907027e8d0be034433e1f56661a6a4fa3292daff/validation_tests.json")
     test_descs = Poison.decode!(resp.body)

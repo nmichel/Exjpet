@@ -18,23 +18,23 @@ defmodule Exjpet.PingPongTest do
     defstruct state: @initial, errors: 0, pings: 0, pongs: 0, msgs: 0
 
     match ~s("#{@ping}"), %{state: @ping, errors: errors} = state do
-      %__MODULE__{state | errors: errors+1}
+      %__MODULE__{state | errors: errors + 1}
     end
 
     match ~s("#{@pong}"), %{state: @ping, pongs: pongs} = state do
-      %__MODULE__{state | state: @pong, pongs: pongs+1}
+      %__MODULE__{state | state: @pong, pongs: pongs + 1}
     end
 
     match ~s("#{@ping}"), %{state: @pong, pings: pings} = state do
-      %__MODULE__{state | state: @ping, pings: pings+1}
+      %__MODULE__{state | state: @ping, pings: pings + 1}
     end
 
     match ~s("#{@pong}"), %{state: @pong, errors: errors} = state do
-      %__MODULE__{state | errors: errors+1}
+      %__MODULE__{state | errors: errors + 1}
     end
 
     match "_", %{msgs: msgs} = state do
-      %__MODULE__{state | msgs: msgs+1}
+      %__MODULE__{state | msgs: msgs + 1}
     end
   end
 

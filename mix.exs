@@ -40,6 +40,7 @@ defmodule Exjpet.Mixfile do
       {:jason, "~> 1.2"},
       {:poison, "~> 4.0"},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
+      {:credo, "~> 1.5", only: :dev, runtime: false},
       {:httpoison, "~> 1.7", only: :test, runtime: false}
     ]
   end

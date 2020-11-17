@@ -1,4 +1,4 @@
-defmodule Exjpet.TestTest do
+defmodule Exjpet.CodeGenValidationGenTest do
   use ExUnit.Case
 
   {:ok, resp} = HTTPoison.get("https://gist.githubusercontent.com/nmichel/8b0d6f194e89abb7281d/raw/907027e8d0be034433e1f56661a6a4fa3292daff/validation_tests.json")

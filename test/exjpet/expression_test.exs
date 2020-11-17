@@ -12,7 +12,7 @@ defmodule Exjpet.ExpressionTest do
     assert list([1, "foo"]) == "[1,\"foo\"]"
     assert list([:any, "foo", :some]) == "[_,\"foo\",*]"
   end
-  
+
   test "object expressions" do
     assert object() == "{}"
     assert object([]) == "{}"
@@ -35,11 +35,11 @@ defmodule Exjpet.ExpressionTest do
     assert set([], [deep: true, global: true]) == "<!!>/g"
     assert set([set([], [deep: true])], [global: true]) == "<<!!>>/g"
   end
-  
+
   @capname "val"
   test "simple compile-time expressions" do
     assert capture(:any, as: @capname) == "(?<val>_)"
-    
+
     defmodule Config do
       def num_param do
         42
