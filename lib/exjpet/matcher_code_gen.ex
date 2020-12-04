@@ -37,7 +37,6 @@ defmodule Exjpet.Matcher.CodeGen do
 
     Application.ensure_started(:ejpet)
     cache_fun = :ejpet_default_cache.build_cache_fun(:ejpet_default_cache_srv)
-    cache_fun.({:clear})
 
     # Generate pattern matchers
     pattern_matcher_fun_mapping =
