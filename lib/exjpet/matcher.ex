@@ -9,6 +9,7 @@ defmodule Exjpet.Matcher do
       Module.register_attribute(__MODULE__, :matchers, accumulate: true)
 
       @before_compile Exjpet.Matcher.CodeGen
+      @after_compile Exjpet.Matcher.CodeGen
     end
   end
 

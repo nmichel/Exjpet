@@ -65,7 +65,7 @@ defmodule Exjpet.MatcherTest.Test do
     [captures | state]
   end
 
-  match ~s(<>), state do
+  match ~s(<>), _state do
     [:iterable_any]
   end
 

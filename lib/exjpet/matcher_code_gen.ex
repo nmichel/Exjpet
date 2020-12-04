@@ -1,8 +1,18 @@
 defmodule Exjpet.Matcher.CodeGen do
   @moduledoc false
 
+  defmacro __after_compile__(_env, _bytecode) do
+    cache_server_pid = Process.get(:ejpet_cache_server)
+    :ejpet_default_cache.stop_server(cache_server_pid)
+  end
+
   defmacro __before_compile__(env) do
     opts = Module.get_attribute(env.module, :opts)
+
+    Process.flag(:trap_exit, true)
+    {:ok, cache_server_pid} = :ejpet_default_cache.start_server()
+    Process.put(:ejpet_cache_server, cache_server_pid)
+    cache_fun = :ejpet_default_cache.build_cache_fun(cache_server_pid)
 
     # TODO simpifly : there can't be several bodies with same pattern and state. If such a case happend, it should be
     # flagged as an error and raise a warning.
@@ -34,9 +44,6 @@ defmodule Exjpet.Matcher.CodeGen do
       Module.get_attribute(env.module, :matchers)
       |> Enum.map(fn({pattern, _state, _body}) -> pattern end)
       |> Enum.uniq()
-
-    Application.ensure_started(:ejpet)
-    cache_fun = :ejpet_default_cache.build_cache_fun(:ejpet_default_cache_srv)
 
     # Generate pattern matchers
     pattern_matcher_fun_mapping =
@@ -101,6 +108,7 @@ defmodule Exjpet.Matcher.CodeGen do
         cap = var!(captures)
         value = Map.get(cap, unquote(var_name))
         unquote(var_ast) = value
+        _ = unquote(var_ast)
       end
     end)
   end
