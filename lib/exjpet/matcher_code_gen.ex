@@ -75,21 +75,6 @@ defmodule Exjpet.Matcher.CodeGen do
         end)
       end
 
-      def match_dyn(node, state) do
-        cache_fun = :ejpet_default_cache.build_cache_fun(:ejpet_default_cache_srv)
-
-        for pattern <- unquote(patterns) do
-          epm = :ejpet.compile(pattern, :jsone, [], cache_fun)
-          # node = :ejpet.backend(epm).decode(node)
-          case :ejpet.run(node, epm) do
-            {true, captures} ->
-              on_match(pattern, state, node, captures) # (1) Hard reference to a on_match/4 function
-            _ ->
-              :no_match
-          end
-        end
-      end
-
       # May or may NOT generate on_match/4 function clauses (if the macro match is not used at all)
       unquote_splicing(matcher_clauses)
 
