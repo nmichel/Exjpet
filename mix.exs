@@ -34,8 +34,7 @@ defmodule Exjpet.Mixfile do
 
   defp deps do
     [
-      {:ejpet, path: "../ejpet"},
-      # {:ejpet, "~> 0.7.0"},
+      {:ejpet, "~> 0.8.0"},
       {:jsone, "~> 1.5"},
       {:jason, "~> 1.2"},
       {:poison, "~> 4.0"},
