@@ -1,4 +1,7 @@
 defmodule :ejpet_code_gen_generators do
+  @moduledoc """
+  This module is a backend module for `ejpet` wich produces AST of matching functions.
+  """
 
   # ---- Capture
 

@@ -71,14 +71,20 @@ defmodule Exjpet.Matcher.CodeGen do
       unquote_splicing(quoted_funs)
 
       # generate main match/2 function
+      @doc """
+      Try to match `node` (a `Poison` decoded json node) with each declared match clause (see `Exjpet.Matcher.on_match/3`).
+
+      * Match clauses are processed in declaration order,
+      * Only matching clauses are processed,
+      * The `state` is passed from matching clause to matching clause, each one amending (or not) and returning it. Stated otherwise
+      the final state is the result of a reduction over the matching clauses (non matching clauses are ignored).
+      """
       def match(node, state, params \\ %{}) do
-        state_0 = state
-        Enum.reduce(unquote(pattern_matcher_fun_mapping), state_0, fn({pattern, fun_name}, state_in) ->
-          res =
-            case apply(__MODULE__, fun_name, [node, params]) do
-              {true, captures} -> on_match(pattern, state_in, node, captures)
-              _ -> state_in
-            end
+        Enum.reduce(unquote(pattern_matcher_fun_mapping), state, fn({pattern, fun_name}, state_in) ->
+          case apply(__MODULE__, fun_name, [node, params]) do
+            {true, captures} -> on_match(pattern, state_in, node, captures)
+            _ -> state_in
+          end
         end)
       end
 

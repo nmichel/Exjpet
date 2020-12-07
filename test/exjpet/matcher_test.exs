@@ -1,8 +1,7 @@
 
 defmodule Exjpet.MatcherTest.Test do
   use Exjpet.Matcher, [
-    options: [number_strict_match: true],
-    debug: true
+    options: [number_strict_match: true]
   ]
 
   match "[]", state do
