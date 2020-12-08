@@ -459,18 +459,24 @@ defmodule :ejpet_code_gen_generators do
     end
   end
 
-  def generate_matcher(what, _options, _cb) when what in [true, false, :null] do
+  def generate_matcher(what, _options, _cb) when what in [true, false] do
     empty = Macro.escape(empty())
     quote location: :keep do
-      fn(item, _params) ->
-        case item do
-          nil when unquote(what) == :null ->
-            {true, unquote(empty)}
-          unquote(what) ->
-            {true, unquote(empty)}
-          _ ->
-            {false, unquote(empty)}
-        end
+      fn(unquote(what), _params) ->
+          {true, unquote(empty)}
+        (_, _params) ->
+          {false, unquote(empty)}
+      end
+    end
+  end
+
+  def generate_matcher(:null, _options, _cb) do
+    empty = Macro.escape(empty())
+    quote location: :keep do
+      fn(nil, _params) ->
+          {true, unquote(empty)}
+        (_, _params) ->
+          {false, unquote(empty)}
       end
     end
   end

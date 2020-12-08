@@ -99,16 +99,11 @@ defmodule Exjpet.Expression do
     {:ok, deep?} = Keyword.fetch(modifiers, :deep)
     {:ok, global?} = Keyword.fetch(modifiers, :global)
     constraints = Enum.map(constraints, &transform/1)
-
-    quote bind_quoted: [constraints: constraints,
-                        deep?:       deep?,
-                        global?:     global?] do
-
-      open = deep? && "<!" || "<"
-      close = deep? && "!>" || ">"
-      ending = global? && "/g" || ""
-
-      open <> Enum.join(constraints, ",") <> close <> ending
+    open = deep? && "<!" || "<"
+    close = deep? && "!>" || ">"
+    ending = global? && "/g" || ""
+    quote do
+      unquote(open) <> Enum.join(unquote(constraints), ",") <> unquote(close) <> unquote(ending)
     end
   end
 
