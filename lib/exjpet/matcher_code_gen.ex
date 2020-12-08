@@ -8,6 +8,7 @@ defmodule Exjpet.Matcher.CodeGen do
 
   defmacro __before_compile__(env) do
     opts = Module.get_attribute(env.module, :opts)
+    match_function_name = opts[:match_function_name] || :match
 
     Process.flag(:trap_exit, true)
     {:ok, cache_server_pid} = :ejpet_default_cache.start_server()
@@ -79,7 +80,7 @@ defmodule Exjpet.Matcher.CodeGen do
       * The `state` is passed from matching clause to matching clause, each one amending (or not) and returning it. Stated otherwise
       the final state is the result of a reduction over the matching clauses (non matching clauses are ignored).
       """
-      def match(node, state, params \\ %{}) do
+      def unquote(match_function_name)(node, state, params \\ %{}) do
         Enum.reduce(unquote(pattern_matcher_fun_mapping), state, fn({pattern, fun_name}, state_in) ->
           case apply(__MODULE__, fun_name, [node, params]) do
             {true, captures} -> on_match(pattern, state_in, node, captures)

@@ -143,4 +143,16 @@ defmodule Exjpet.MatcherTest do
   test "iterable" do
     assert [:list_empty, :list_any, :iterable_any] == Test.match(Poison.decode!(~s([])), [])
   end
+
+  test "renaming match function in generate module" do
+    defmodule Toto do
+      use Exjpet.Matcher, match_function_name: :pouet
+
+        match "[]", _state do
+          :ok
+        end
+    end
+
+    assert :ok == Toto.pouet(Poison.decode!(~s([])), [])
+  end
 end

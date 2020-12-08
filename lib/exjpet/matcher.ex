@@ -4,7 +4,7 @@ defmodule Exjpet.Matcher do
 
   Under the hood matching functions are build using [ejpet](https://hex.pm/packages/ejpet) at compile-time.
 
-  A matcher module has a `match/2` (default name, can be overriden via `matcher_name` parameter when `using`) function automatically
+  A matcher module has a `match/2` (default name, can be overriden via `match_function_name` parameter when `using`) function automatically
   injected which takes a json  node (in `Poison` layout) and an unspecified `state`. That function processes the body
   of each clause the json node matches.
 
