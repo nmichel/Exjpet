@@ -58,7 +58,7 @@ defmodule Exjpet.Matcher do
   Declares a matching clause.
 
   When the body is executed, some bindings are automatically provided :
-  - `json` is bound to the processed json node,
+  - `jnode` is bound to the processed json node,
   - `captures` is bound to the map of all captures gathered during json node processing,
   - each named capture declared in the pattern yield to a binding.
 
