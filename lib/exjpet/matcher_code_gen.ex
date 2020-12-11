@@ -26,13 +26,11 @@ defmodule Exjpet.Matcher.CodeGen do
     # JSON node matches one of the pattern expressions, passing this expression as first
     # parameter for disambiguation.
     #
-    # TODO : generate different fonctions, to avoid pattern matching on expression string.
-    #
     matcher_clauses =
       for {pattern, [{state, body}]} <- matchers do
         capture_vars = pattern |> extract_capture_names() |> build_bindings()
         quote do
-          def on_match(unquote("#{pattern}"), unquote(state), var!(jnode), var!(captures)) do
+          def unquote(pattern_to_name(pattern))(unquote(state), var!(jnode), var!(captures)) do
             _ = var!(jnode)
             _ = var!(captures)
             unquote_splicing(capture_vars)
@@ -67,6 +65,8 @@ defmodule Exjpet.Matcher.CodeGen do
         generate_matcher_fun(name, quoted_fun)
       end
 
+    quoted_matcher_calls = generate_matcher_calls(pattern_matcher_fun_mapping)
+
     quote location: :keep do
       # inject all matchers (and submatchers) functions
       unquote_splicing(quoted_funs)
@@ -80,21 +80,25 @@ defmodule Exjpet.Matcher.CodeGen do
       * The `state` is passed from matching clause to matching clause, each one amending (or not) and returning it. Stated otherwise
       the final state is the result of a reduction over the matching clauses (non matching clauses are ignored).
       """
-      def unquote(match_function_name)(node, state, params \\ %{}) do
-        Enum.reduce(unquote(pattern_matcher_fun_mapping), state, fn({pattern, fun_name}, state_in) ->
-          case apply(__MODULE__, fun_name, [node, params]) do
-            {true, captures} -> on_match(pattern, state_in, node, captures)
-            _ -> state_in
-          end
-        end)
+      def unquote(match_function_name)(var!(node), var!(state), var!(params) \\ %{}) do
+        unquote_splicing(quoted_matcher_calls)
+        var!(state)
       end
 
-      # May or may NOT generate on_match/4 function clauses (if the macro match is not used at all)
+      # May or may NOT generate on_match/3 function clauses (if the macro match is not used at all)
       unquote_splicing(matcher_clauses)
+    end
+  end
 
-      # Therefore we must provide a default implementation of on_match/4 for (1) to compile
-      # even if it will NEVER be called
-      def on_match(_, _, _, _), do: :not_used_only_for_compilation
+  defp generate_matcher_calls(pattern_matcher_fun_mapping) do
+    for {pattern, fun_name} <- pattern_matcher_fun_mapping do
+      quote location: :keep do
+        var!(state) =
+          case unquote(fun_name)(var!(node), var!(params)) do
+            {true, captures} -> unquote(pattern_to_name(pattern))(var!(state), var!(node), captures)
+            _ -> var!(state)
+          end
+      end
     end
   end
 
@@ -111,9 +115,8 @@ defmodule Exjpet.Matcher.CodeGen do
     Enum.map(var_names, fn(var_name) ->
       var = String.to_atom(var_name)
       var_ast = Macro.var(var, nil)
-      quote do
-        cap = var!(captures)
-        value = Map.get(cap, unquote(var_name))
+      quote location: :keep do
+        value = Map.get(var!(captures), unquote(var_name))
         unquote(var_ast) = value
         _ = unquote(var_ast)
       end
@@ -159,4 +162,6 @@ defmodule Exjpet.Matcher.CodeGen do
       [do: body]
     ]}
   end
+
+  defp pattern_to_name(pattern), do: :"on_match_#{Base.encode16(pattern, case: :lower)}"
 end

@@ -78,7 +78,7 @@ defmodule Exjpet.Matcher do
       %{foo_42_count: 1, foo_count: 1, node_count: 1, status: :ping_foo}
       ...> state = Poison.decode!(~s(["ranavoar"])) |> MySecondMatcher.match(state)
       %{foo_42_count: 2, foo_count: 2, node_count: 3, status: :pong_foo}
-      ...> state = Poison.decode!(~s({"foobar": 42})) |> MySecondMatcher.match(state)
+      ...> Poison.decode!(~s({"foobar": 42})) |> MySecondMatcher.match(state)
       %{foo_42_count: 2, foo_count: 2, node_count: 3, status: :pong_foo}
   """
 
