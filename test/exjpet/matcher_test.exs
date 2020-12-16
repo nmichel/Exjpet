@@ -64,8 +64,8 @@ defmodule Exjpet.MatcherTest.Test do
     [captures | state]
   end
 
-  match ~s(<>), _state do
-    [:iterable_any]
+  match ~s(<>), state do
+    [:iterable_any | state]
   end
 
   # @pattern "[" <> "]"
@@ -107,33 +107,33 @@ defmodule Exjpet.MatcherTest do
 
   test "test" do
     node = Poison.decode!("[true, false]")
-    assert [:list_any, :list_true_false, {:t_9, [[true, false]], [true], [false]}, :iterable_any] == Test.match(node, [])
+    assert [:iterable_any, {:t_9, [[true, false]], [true], [false]}, :list_true_false, :list_any] == Test.match(node, [])
   end
 
   test "match any object" do
-    assert [:object_any, :iterable_any] == Test.match(Poison.decode!("{}"), [])
+    assert [:iterable_any, :object_any] == Test.match(Poison.decode!("{}"), [])
   end
 
   test "match object by key" do
-    assert [:object_any, :object_key_any_value, :iterable_any] == Test.match(Poison.decode!(~s({"foo": 42})), [])
-    assert [:object_any, :object_key_any_value, :iterable_any] == Test.match(Poison.decode!(~s({"foo": []})), [])
-    assert [:object_any, :iterable_any] == Test.match(Poison.decode!(~s({"notfoo": 42})), [])
+    assert [:iterable_any, :object_key_any_value, :object_any] == Test.match(Poison.decode!(~s({"foo": 42})), [])
+    assert [:iterable_any, :object_key_any_value, :object_any] == Test.match(Poison.decode!(~s({"foo": []})), [])
+    assert [:iterable_any, :object_any] == Test.match(Poison.decode!(~s({"notfoo": 42})), [])
   end
 
   test "match object by value" do
-    assert [:object_any, :object_key_any_value, :object_any_key_value, :object_key_and_value, :iterable_any] == Test.match(Poison.decode!(~s({"foo": [42]})), [])
-    assert [:object_any, :object_any_key_value, :iterable_any] == Test.match(Poison.decode!(~s({"other_key": [42]})), [])
-    assert [:object_any, :iterable_any] == Test.match(Poison.decode!(~s({"notfoo": 42})), [])
+    assert [:iterable_any, :object_key_and_value, :object_any_key_value, :object_key_any_value, :object_any] == Test.match(Poison.decode!(~s({"foo": [42]})), [])
+    assert [:iterable_any, :object_any_key_value, :object_any] == Test.match(Poison.decode!(~s({"other_key": [42]})), [])
+    assert [:iterable_any, :object_any] == Test.match(Poison.decode!(~s({"notfoo": 42})), [])
   end
 
   test "match object by key and value" do
-    assert [:object_any, :object_key_any_value, :object_any_key_value, :object_key_and_value, :iterable_any] == Test.match(Poison.decode!(~s({"foo": [42]})), [])
+    assert [:iterable_any, :object_key_and_value, :object_any_key_value, :object_key_any_value, :object_any] == Test.match(Poison.decode!(~s({"foo": [42]})), [])
   end
 
   test "match object several conditions" do
-    assert [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds, :object_key_and_value, :iterable_any] == Test.match(Poison.decode!(~s({"foo": [42], "bar": false})), [])
-    assert [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds, :iterable_any] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": false, "foo": {}})), [])
-    refute [:object_any, :object_key_any_value, :object_any_key_value, :object_many_conds, :iterable_any] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": true, "foo": {}})), [])
+    assert [:iterable_any, :object_key_and_value, :object_many_conds, :object_any_key_value, :object_key_any_value, :object_any] == Test.match(Poison.decode!(~s({"foo": [42], "bar": false})), [])
+    assert [:iterable_any, :object_many_conds, :object_any_key_value, :object_key_any_value, :object_any] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": false, "foo": {}})), [])
+    refute [:iterable_any, :object_many_conds, :object_any_key_value, :object_key_any_value, :object_any] == Test.match(Poison.decode!(~s({"tsoin": [42], "bar": true, "foo": {}})), [])
   end
 
   test "capture" do
@@ -141,7 +141,7 @@ defmodule Exjpet.MatcherTest do
   end
 
   test "iterable" do
-    assert [:list_empty, :list_any, :iterable_any] == Test.match(Poison.decode!(~s([])), [])
+    assert [:iterable_any, :list_any, :list_empty] == Test.match(Poison.decode!(~s([])), [])
   end
 
   test "renaming match function in generate module" do

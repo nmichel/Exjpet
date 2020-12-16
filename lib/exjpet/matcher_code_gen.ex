@@ -15,10 +15,13 @@ defmodule Exjpet.Matcher.CodeGen do
     Process.put(:ejpet_cache_server, cache_server_pid)
     cache_fun = :ejpet_default_cache.build_cache_fun(cache_server_pid)
 
+    # Module attributes accumulate in reverse order
+    ordered_definitions = Module.get_attribute(env.module, :matchers) |> Enum.reverse()
+
     # TODO simpifly : there can't be several bodies with same pattern and state. If such a case happend, it should be
     # flagged as an error and raise a warning.
     matchers =
-      Module.get_attribute(env.module, :matchers)
+      ordered_definitions
       |> Enum.group_by(fn({pattern, state, _body}) -> {pattern, Macro.to_string(state)} end)
       |> Enum.map(fn({{pattern, _state_str}, matchers}) -> {pattern, Enum.map(matchers, &({elem(&1, 1), elem(&1, 2)}))} end)
 
@@ -40,7 +43,7 @@ defmodule Exjpet.Matcher.CodeGen do
       end
 
     patterns =
-      Module.get_attribute(env.module, :matchers)
+      ordered_definitions
       |> Enum.map(fn({pattern, _state, _body}) -> pattern end)
       |> Enum.uniq()
 
