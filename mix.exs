@@ -28,7 +28,8 @@ defmodule Exjpet.Mixfile do
       name: "exjpet",
       maintainers: ["Nicolas Michel"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/nmichel/Exjpet"}
+      links: %{"GitHub" => "https://github.com/nmichel/Exjpet"},
+      exclude_patterns: [".ex_"]
     ]
   end
 
