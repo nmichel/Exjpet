@@ -9,7 +9,11 @@ defmodule Exjpet.Mixfile do
       start_permanent: Mix.env == :prod,
       description: description(),
       package: package(),
-      deps: deps()
+      deps: deps(),
+      docs: [
+        main: "about",
+        extras: Path.wildcard("pages/*.md")
+      ]
     ]
   end
 
