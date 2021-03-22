@@ -1,6 +1,8 @@
 # Exjpet
 
-**TODO: Add description**
+Allow for native use of [`:ejpet`](https://github.com/nmichel/ejpet) in Elixir.
+
+[![Hex.pm](https://img.shields.io/hexpm/v/exjpet.svg)](https://hex.pm/packages/exjpet)
 
 ## Installation
 
@@ -10,7 +12,7 @@ by adding `exjpet` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:exjpet, "~> 0.1.0"}
+    {:exjpet, "~> 0.3.0"}
   ]
 end
 ```
